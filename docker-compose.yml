@@ -1,0 +1,54 @@
+services:
+  api:
+    build: .
+    container_name: hail_api
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+       - .env
+    volumes:
+      - .:/src
+      - /src/node_modules
+    command: npm run dev
+    depends_on:
+       redis:
+         condition: service_started
+       postgres:
+         condition: service_healthy
+  
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: hail_postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres 
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: hail_db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+
+  redis:
+     image: redis:alpine
+     container_name: hail_redis
+     restart: always
+     ports:
+       - "6379:6379"
+     volumes:
+       - redis_data:/data
+
+
+
+volumes:
+  postgres_data:
+  redis_data:
