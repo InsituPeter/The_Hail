@@ -10,7 +10,7 @@ class TokenRepository {
                 expiresAt,
                 ipAddress,
                 userAgent,
-                state: 'ACTIVE'
+                state:'ACTIVE'
             }
         })
     }

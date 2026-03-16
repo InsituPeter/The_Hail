@@ -6,6 +6,7 @@ class UserService {
         this.userRepository = userRepository
         this.emailService = emailService
         this.riderRepository = riderRepository
+        
     }
 
     async createUser(data) {

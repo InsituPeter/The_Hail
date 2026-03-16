@@ -19,21 +19,15 @@ async verifyConnection(){
 }
 
 async sendEmail(options){
-    try{
-      const info= await this.transporter.sendMail({
+    const info = await this.transporter.sendMail({
         from:options.from,
         to:options.to,
         subject:options.subject,
         html:options.html,
         attachments:options.attachments
-      })
-      console.log(`Email sent successfully: ${info.messageId}`)
-      return info
-    }
-
-    catch(error){
-        console.log(`Error sending email: ${error.message}`)
-    }
+    })
+    console.log(`Email sent successfully: ${info.messageId}`)
+    return info
 }
 
 async sendWelcomeEmail(userEmail, userName){
@@ -54,7 +48,6 @@ async sendWelcomeEmail(userEmail, userName){
     }
 }
 async sendPasswordResetEmail(userEmail, userName, resetToken){
-    try{
      //const resetToken=crypto.randomBytes(32).toString('hex')
      const resetUrl=`${this.config.frontend.url}/reset-password?token=${resetToken}`
      const html=this.templateDomain.renderPasswordReset({
@@ -68,16 +61,10 @@ async sendPasswordResetEmail(userEmail, userName, resetToken){
         subject:`Password Reset Request for ${this.templateDomain.companyName}`,
         html
      })
-    }
-    catch(error){
-        console.error('Failed to send password reset email:', error.message )
-    }
-
 }
 
 
 async sendEmailVerification(userEmail, userName, rawToken){
-    try{
       const verificationUrl=`${this.config.frontend.url}/verify-email?token=${rawToken}`
       const html = this.templateDomain.renderEmailVerification({
         userName,
@@ -88,10 +75,6 @@ async sendEmailVerification(userEmail, userName, rawToken){
         subject: `Verify your email - ${this.templateDomain.companyName}`,
         html
       })
-    }
-    catch(error){
-        console.error('Failed to send email verification:', error.message )
-    }
 }
 
 

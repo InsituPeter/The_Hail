@@ -61,7 +61,7 @@ const authService = new AuthService(userRepository, tokenRepository, emailServic
 const userService = new UserService(userRepository, emailService, riderRepository)
 const mapsService = new MapsService(mapsClient, config)
 const paymentService = new PaymentService(paystackClient, config)
-const driverService = new DriverService(driverRepository, rideRepository, paymentService)
+const driverService = new DriverService(driverRepository, rideRepository, paymentService, config)
 const riderService = new RiderService(riderRepository, paymentService, config)
 const rideService = new RideService(rideRepository, riderRepository, driverRepository, paymentRepository, mapsService, paymentService)
 

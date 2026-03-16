@@ -14,7 +14,7 @@ module.exports = (authService, rideController) => {
 
     // Rider actions
     router.post('/estimate', auth, riderOnly, validate(estimateFareSchema), rideController.estimateFare)
-    router.post('/', auth, riderOnly, idempotency, validate(requestRideSchema), rideController.requestRide)
+    router.post('/', auth, riderOnly, validate(requestRideSchema), idempotency, rideController.requestRide)
     router.post('/:rideId/cancel', auth, riderOnly, validate(cancelRideSchema), rideController.cancelRide)
     router.get('/:rideId', auth, rideController.getRide)
 

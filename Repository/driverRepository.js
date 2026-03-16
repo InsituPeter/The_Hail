@@ -56,6 +56,12 @@ class DriverRepository {
             update: { lat, lng, heading }
         })
     }
+
+    async findLocation(driverProfileId) {
+        return await prisma.driverLocation.findUnique({
+            where: { driverProfileId }
+        })
+    }
 }
 
 module.exports = DriverRepository

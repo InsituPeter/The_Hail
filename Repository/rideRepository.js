@@ -33,14 +33,24 @@ class RideRepository {
     async findByRider(riderId) {
         return await prisma.ride.findMany({
             where: { riderId },
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
+            include: {
+                rider: { include: { user: { select: { userId: true } } } },
+                driver: true,
+                payment: true,
+            }
         })
     }
 
     async findByDriver(driverProfileId) {
         return await prisma.ride.findMany({
             where: { driverProfileId },
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
+            include: {
+                rider: { include: { user: { select: { userId: true } } } },
+                driver: true,
+                payment: true,
+            }
         })
     }
 

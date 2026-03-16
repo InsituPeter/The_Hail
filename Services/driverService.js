@@ -5,10 +5,11 @@ const GEO_KEY = 'drivers:available'
 const ACTIVE_RIDE_STATES = ['ACCEPTED', 'DRIVER_ARRIVING', 'IN_PROGRESS']
 
 class DriverService {
-    constructor(driverRepository, rideRepository, paymentService) {
+    constructor(driverRepository, rideRepository, paymentService, config) {
         this.driverRepository = driverRepository
         this.rideRepository = rideRepository
         this.paymentService = paymentService
+        this.config = config
     }
 
     async createProfile(userId, data) {
@@ -40,6 +41,11 @@ class DriverService {
 
         if (!isAvailable) {
             await redis.zrem(GEO_KEY, profile.driverProfileId.toString())
+        } else {
+            const location = await this.driverRepository.findLocation(profile.driverProfileId)
+            if (location) {
+                await redis.geoadd(GEO_KEY, location.lng, location.lat, profile.driverProfileId.toString())
+            }
         }
 
         return { isAvailable }
@@ -70,7 +76,7 @@ class DriverService {
             businessName,
             settlementBank,
             accountNumber,
-            percentageCharge: 90,   // driver receives 90% of each charge
+            percentageCharge: 100 - this.config.platformFeePercent,
         })
 
         await this.driverRepository.updateProfile(profile.driverProfileId, {

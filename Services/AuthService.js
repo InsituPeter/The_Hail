@@ -62,9 +62,8 @@ class AuthService {
         const isMatch = await bcrypt.compare(password, user.password)
         if (!isMatch) throw new ForbiddenError('Invalid credentials')
 
+        if (user.suspended) throw new ForbiddenError('Account is suspended')
         if (user.deletedAt) throw new NotFoundError('Invalid credentials')
-        if (!user.emailVerifiedAt) throw new ForbiddenError('Email not verified')
-
 
         const accessToken = this.generateAccessToken({
             userId: user.userId,
@@ -117,7 +116,7 @@ class AuthService {
     async sendVerificationEmail(userId) {
         const user = await this.userRepository.findById(userId)
         if (!user) throw new NotFoundError('User')
-        if (user.emailVerifiedAt) throw new ConflictError('Email already verified')
+        if (user.emailVerified) throw new ConflictError('Email already verified')
 
         const rawToken = this._generateRawToken()
         const hashedToken = this._hashToken(rawToken)
@@ -165,8 +164,9 @@ class AuthService {
         if (new Date() > stored.expiresAt) throw new AuthorizationError('Reset link has expired')
 
         const hashed = await bcrypt.hash(newPassword, 10)
-        await this.tokenRepository.revokeToken(hashedToken)
         await this.userRepository.updateProfile(stored.userId, { password: hashed })
+        await this.tokenRepository.revokeToken(hashedToken)
+        await this.logoutAllDevices(stored.userId)
     }
 }
 module.exports = AuthService

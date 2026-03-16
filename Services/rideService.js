@@ -62,6 +62,7 @@ class RideService {
     async acceptRide(userId, rideId) {
         const driverProfile = await this.driverRepository.findByUserId(userId)
         if (!driverProfile) throw new NotFoundError('Driver profile')
+        if (driverProfile.approvalState !== 'APPROVED') throw new ForbiddenError('Driver is not approved')
         if (!driverProfile.isAvailable) throw new ForbiddenError('Driver is not available')
 
         const ride = await this.rideRepository.findById(rideId)

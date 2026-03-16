@@ -79,12 +79,11 @@ model User {
   name            String
   phone           String?
   role            UserRole
-  emailVerifiedAt DateTime?      @map("email_verified_at")  // null = unverified
-  deletedAt       DateTime?      @map("deleted_at")          // null = active (soft delete)
+  emailVerifiedAt DateTime?      @map("email_verified_at") // null = unverified
+  deletedAt       DateTime?      @map("deleted_at") // null = active (soft delete)
   version         Int            @default(1)
   createdAt       DateTime       @default(now()) @map("created_at")
   updatedAt       DateTime       @updatedAt @map("updated_at")
-
   tokens          Token[]
   suspensions     Suspension[]
   driverProfile   DriverProfile?
@@ -98,12 +97,12 @@ model Suspension {
   id          Int       @id @default(autoincrement())
   userId      Int       @map("user_id")
   reason      String
-  suspendedBy Int       @map("suspended_by")   // admin userId
+  suspendedBy Int       @map("suspended_by") // admin userId
   suspendedAt DateTime  @default(now()) @map("suspended_at")
-  liftedAt    DateTime? @map("lifted_at")       // null = still active
+  liftedAt    DateTime? @map("lifted_at") // null = still active
   liftedBy    Int?      @map("lifted_by")
 
-  user        User      @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   @@index([userId])
   @@map("suspensions")
@@ -120,7 +119,6 @@ model Token {
   ipAddress String?    @map("ip_address")
   userAgent String?    @map("user_agent")
   createdAt DateTime   @default(now()) @map("created_at")
-
   user      User       @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   @@index([userId])
@@ -132,41 +130,41 @@ model Token {
 // ─── Driver & Rider Profiles ──────────────────────────────────────────────────
 
 model DriverProfile {
-  driverProfileId Int                 @id @default(autoincrement()) @map("driver_profile_id")
-  userId          Int                 @unique @map("user_id")
-  licenseNumber   String              @unique @map("license_number")
-  vehicleType     VehicleType         @map("vehicle_type")
-  vehicleMake     String              @map("vehicle_make")
-  vehicleModel    String              @map("vehicle_model")
-  vehiclePlate    String              @unique @map("vehicle_plate")
-  vehicleYear     Int                 @map("vehicle_year")
-  isAvailable     Boolean             @default(false) @map("is_available")
-  approvalState   DriverApprovalState @default(PENDING_REVIEW) @map("approval_state")
+  driverProfileId        Int                 @id @default(autoincrement()) @map("driver_profile_id")
+  userId                 Int                 @unique @map("user_id")
+  licenseNumber          String              @unique @map("license_number")
+  vehicleType            VehicleType         @map("vehicle_type")
+  vehicleMake            String              @map("vehicle_make")
+  vehicleModel           String              @map("vehicle_model")
+  vehiclePlate           String              @unique @map("vehicle_plate")
+  vehicleYear            Int                 @map("vehicle_year")
+  isAvailable            Boolean             @default(false) @map("is_available")
+  approvalState          DriverApprovalState @default(PENDING_REVIEW) @map("approval_state")
   paystackSubaccountCode String?             @map("paystack_subaccount_code")
-  rating          Float               @default(5.0)
-  totalRides      Int                 @default(0) @map("total_rides")
-  createdAt       DateTime            @default(now()) @map("created_at")
-  updatedAt       DateTime            @updatedAt @map("updated_at")
+  rating                 Float               @default(5.0)
+  totalRides             Int                 @default(0) @map("total_rides")
+  createdAt              DateTime            @default(now()) @map("created_at")
+  updatedAt              DateTime            @updatedAt @map("updated_at")
 
-  user            User                @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  rides           Ride[]
-  location        DriverLocation?
+  user     User            @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  rides    Ride[]
+  location DriverLocation?
 
   @@map("driver_profiles")
 }
 
 model RiderProfile {
-  riderProfileId             Int      @id @default(autoincrement()) @map("rider_profile_id")
-  userId                     Int      @unique @map("user_id")
-  paystackAuthorizationCode  String?  @map("paystack_authorization_code")
-  paystackEmail              String?  @map("paystack_email")
-  rating                     Float    @default(5.0)
-  totalRides                 Int      @default(0) @map("total_rides")
-  createdAt                  DateTime @default(now()) @map("created_at")
-  updatedAt                  DateTime @updatedAt @map("updated_at")
+  riderProfileId            Int      @id @default(autoincrement()) @map("rider_profile_id")
+  userId                    Int      @unique @map("user_id")
+  paystackAuthorizationCode String?  @map("paystack_authorization_code")
+  paystackEmail             String?  @map("paystack_email")
+  rating                    Float    @default(5.0)
+  totalRides                Int      @default(0) @map("total_rides")
+  createdAt                 DateTime @default(now()) @map("created_at")
+  updatedAt                 DateTime @updatedAt @map("updated_at")
 
-  user           User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  rides          Ride[]
+  user  User   @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  rides Ride[]
 
   @@map("rider_profiles")
 }
@@ -174,33 +172,33 @@ model RiderProfile {
 // ─── Ride Domain ──────────────────────────────────────────────────────────────
 
 model Ride {
-  rideId             Int            @id @default(autoincrement()) @map("ride_id")
-  riderId            Int            @map("rider_id")
-  driverProfileId    Int?           @map("driver_profile_id")  // null until a driver accepts
-  state              RideState      @default(REQUESTED)
-  pickupAddress      String         @map("pickup_address")
-  pickupLat          Float          @map("pickup_lat")
-  pickupLng          Float          @map("pickup_lng")
-  dropoffAddress     String         @map("dropoff_address")
-  dropoffLat         Float          @map("dropoff_lat")
-  dropoffLng         Float          @map("dropoff_lng")
-  vehicleType        VehicleType    @map("vehicle_type")
-  paymentMethod      PaymentMethod  @map("payment_method")
-  estimatedFare      Float          @map("estimated_fare")
-  finalFare          Float?         @map("final_fare")          // set on completion
-  cancellationReason String?        @map("cancellation_reason")
-  requestedAt        DateTime       @default(now()) @map("requested_at")
-  acceptedAt         DateTime?      @map("accepted_at")
-  pickupAt           DateTime?      @map("pickup_at")
-  completedAt        DateTime?      @map("completed_at")
-  cancelledAt        DateTime?      @map("cancelled_at")
-  createdAt          DateTime       @default(now()) @map("created_at")
-  updatedAt          DateTime       @updatedAt @map("updated_at")
+  rideId             Int           @id @default(autoincrement()) @map("ride_id")
+  riderId            Int           @map("rider_id")
+  driverProfileId    Int?          @map("driver_profile_id") // null until a driver accepts
+  state              RideState     @default(REQUESTED)
+  pickupAddress      String        @map("pickup_address")
+  pickupLat          Float         @map("pickup_lat")
+  pickupLng          Float         @map("pickup_lng")
+  dropoffAddress     String        @map("dropoff_address")
+  dropoffLat         Float         @map("dropoff_lat")
+  dropoffLng         Float         @map("dropoff_lng")
+  vehicleType        VehicleType   @map("vehicle_type")
+  paymentMethod      PaymentMethod @map("payment_method")
+  estimatedFare      Float         @map("estimated_fare")
+  finalFare          Float?        @map("final_fare") // set on completion
+  cancellationReason String?       @map("cancellation_reason")
+  requestedAt        DateTime      @default(now()) @map("requested_at")
+  acceptedAt         DateTime?     @map("accepted_at")
+  pickupAt           DateTime?     @map("pickup_at")
+  completedAt        DateTime?     @map("completed_at")
+  cancelledAt        DateTime?     @map("cancelled_at")
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
 
-  rider              RiderProfile   @relation(fields: [riderId], references: [riderProfileId])
-  driver             DriverProfile? @relation(fields: [driverProfileId], references: [driverProfileId])
-  stateTransitions   RideStateTransition[]
-  payment            Payment?
+  rider            RiderProfile          @relation(fields: [riderId], references: [riderProfileId])
+  driver           DriverProfile?        @relation(fields: [driverProfileId], references: [driverProfileId])
+  stateTransitions RideStateTransition[]
+  payment          Payment?
 
   @@index([riderId])
   @@index([driverProfileId])
@@ -218,7 +216,7 @@ model RideStateTransition {
   performedBy Int?       @map("performed_by")
   createdAt   DateTime   @default(now()) @map("created_at")
 
-  ride        Ride       @relation(fields: [rideId], references: [rideId], onDelete: Cascade)
+  ride Ride @relation(fields: [rideId], references: [rideId], onDelete: Cascade)
 
   @@index([rideId])
   @@map("ride_state_transitions")
@@ -226,14 +224,14 @@ model RideStateTransition {
 
 // Isolated from DriverProfile to avoid write amplification on frequent GPS updates
 model DriverLocation {
-  locationId      Int           @id @default(autoincrement()) @map("location_id")
-  driverProfileId Int           @unique @map("driver_profile_id")
+  locationId      Int      @id @default(autoincrement()) @map("location_id")
+  driverProfileId Int      @unique @map("driver_profile_id")
   lat             Float
   lng             Float
   heading         Float?
-  updatedAt       DateTime      @updatedAt @map("updated_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
-  driver          DriverProfile @relation(fields: [driverProfileId], references: [driverProfileId], onDelete: Cascade)
+  driver DriverProfile @relation(fields: [driverProfileId], references: [driverProfileId], onDelete: Cascade)
 
   @@map("driver_locations")
 }
@@ -241,16 +239,16 @@ model DriverLocation {
 // ─── Payment ──────────────────────────────────────────────────────────────────
 
 model Payment {
-  paymentId              Int           @id @default(autoincrement()) @map("payment_id")
-  rideId                 Int           @unique @map("ride_id")   // one payment per ride
-  amount                 Float
-  method                 PaymentMethod
-  state                  PaymentState  @default(PENDING)
-  paystackReference      String?       @map("paystack_reference")
-  createdAt              DateTime      @default(now()) @map("created_at")
-  updatedAt              DateTime      @updatedAt @map("updated_at")
+  paymentId         Int           @id @default(autoincrement()) @map("payment_id")
+  rideId            Int           @unique @map("ride_id") // one payment per ride
+  amount            Float
+  method            PaymentMethod
+  state             PaymentState  @default(PENDING)
+  paystackReference String?       @map("paystack_reference")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
 
-  ride                   Ride          @relation(fields: [rideId], references: [rideId])
+  ride Ride @relation(fields: [rideId], references: [rideId])
 
   @@map("payments")
 }
