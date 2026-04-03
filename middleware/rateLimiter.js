@@ -16,4 +16,12 @@ const generalLimiter = rateLimit({
     legacyHeaders: false,
 })
 
-module.exports = { authLimiter, generalLimiter }
+const passwordResetLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    max: 5,
+    message: { error: { code: 'TOO_MANY_REQUESTS', message: 'Too many password reset attempts, please try again in an hour' } },
+    standardHeaders: true,
+    legacyHeaders: false,
+})
+
+module.exports = { authLimiter, generalLimiter, passwordResetLimiter }

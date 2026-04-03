@@ -11,7 +11,7 @@ class UserService {
 
     async createUser(data) {
         const { email, password, name, role, phone } = data
-        if (!email || !password || !name || !role || !phone) {
+        if (!email || !password || !name || !role) {
             throw new ValidationError('All fields are required')
         }
 
@@ -24,8 +24,6 @@ class UserService {
         if (role === 'RIDER') {
             await this.riderRepository.create(user.userId)
         }
-
-        await this.emailService.sendWelcomeEmail(user.email, user.name)
 
         const { password: _, ...safeUser } = user
         return safeUser

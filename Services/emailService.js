@@ -1,8 +1,8 @@
 class EmailService{
-    constructor(transporter, templateDomain, config){
+    constructor(transporter, templateDomain, frontendUrl){
         this.transporter=transporter
         this.templateDomain=templateDomain
-        this.config=config
+        this.frontendUrl=frontendUrl
     }
 
 async verifyConnection(){
@@ -32,7 +32,7 @@ async sendEmail(options){
 
 async sendWelcomeEmail(userEmail, userName){
     try{
-        const dashboardUrl= `${this.config.frontend.url}/dashboard`
+        const dashboardUrl= `${this.frontendUrl}/dashboard`
         const html= this.templateDomain.renderWelcomeEmail({
             userName,
             dashboardUrl
@@ -49,7 +49,7 @@ async sendWelcomeEmail(userEmail, userName){
 }
 async sendPasswordResetEmail(userEmail, userName, resetToken){
      //const resetToken=crypto.randomBytes(32).toString('hex')
-     const resetUrl=`${this.config.frontend.url}/reset-password?token=${resetToken}`
+     const resetUrl=`${this.frontendUrl}/reset-password?token=${resetToken}`
      const html=this.templateDomain.renderPasswordReset({
         userName,
         resetUrl,
@@ -65,7 +65,7 @@ async sendPasswordResetEmail(userEmail, userName, resetToken){
 
 
 async sendEmailVerification(userEmail, userName, rawToken){
-      const verificationUrl=`${this.config.frontend.url}/verify-email?token=${rawToken}`
+      const verificationUrl=`${this.frontendUrl}/verify-email?token=${rawToken}`
       const html = this.templateDomain.renderEmailVerification({
         userName,
         verificationUrl

@@ -7,12 +7,7 @@ class RiderService {
         this.config = config
     }
 
-    async createProfile(userId) {
-        const existing = await this.riderRepository.findByUserId(userId)
-        if (existing) throw new ConflictError('Rider profile already exists')
-        return await this.riderRepository.create(userId)
-    }
-
+    
     async getProfile(userId) {
         const profile = await this.riderRepository.findByUserId(userId)
         if (!profile) throw new NotFoundError('Rider profile')

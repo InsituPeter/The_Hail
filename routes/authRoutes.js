@@ -2,7 +2,7 @@ const express = require('express')
 const router = express.Router()
 
 const validate = require('../middleware/validate')
-const { authLimiter } = require('../middleware/rateLimiter')
+const { authLimiter, passwordResetLimiter } = require('../middleware/rateLimiter')
 const { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema } = require('../validation/authSchemas')
 
 module.exports = (authController) => {
@@ -11,8 +11,8 @@ module.exports = (authController) => {
     router.post('/refresh', authController.refresh)
     router.post('/logout', authController.logout)
     router.get('/verify-email', authController.verifyEmail)
-    router.post('/forgot-password', authLimiter, validate(forgotPasswordSchema), authController.forgotPassword)
-    router.post('/reset-password', authLimiter, validate(resetPasswordSchema), authController.resetPassword)
+    router.post('/forgot-password', passwordResetLimiter, validate(forgotPasswordSchema), authController.forgotPassword)
+    router.post('/reset-password', passwordResetLimiter, validate(resetPasswordSchema), authController.resetPassword)
 
     return router
 }

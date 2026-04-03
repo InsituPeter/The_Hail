@@ -252,3 +252,5 @@ model Payment {
 
   @@map("payments")
 }
+
+

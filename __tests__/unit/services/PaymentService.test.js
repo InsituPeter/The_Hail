@@ -256,6 +256,127 @@ describe('PaymentService.verifyTransaction()', () => {
     })
 })
 
+// ─── _withRetry() ────────────────────────────────────────────────────────────
+//
+// All Paystack calls pass through _withRetry. The rules:
+//   - Retryable errors: HTTP 5xx responses, ECONNRESET, ETIMEDOUT
+//   - Non-retryable errors: HTTP 4xx (card declined, bad params, etc.)
+//   - On success before maxAttempts, returns the result without further calls
+//   - After maxAttempts retryable failures, throws the last error
+//
+// We test _withRetry indirectly through chargeAuthorization so the mock wiring
+// is identical to the production path.
+
+describe('PaymentService retry logic (_withRetry)', () => {
+    let paymentService, paystackClient
+
+    beforeEach(() => {
+        jest.useFakeTimers()
+        paystackClient = makePaystackClient()
+        paymentService = new PaymentService(paystackClient, testConfig)
+    })
+
+    afterEach(() => {
+        jest.useRealTimers()
+    })
+
+    it('succeeds immediately and does not retry when the first attempt works', async () => {
+        paystackClient.post.mockResolvedValue({
+            data: { data: { status: 'success', reference: 'REF_ok' } },
+        })
+
+        await paymentService.chargeAuthorization('AUTH_x', 'a@b.com', 100, 'ACCT_y')
+
+        expect(paystackClient.post).toHaveBeenCalledTimes(1)
+    })
+
+    it('retries on a 500 error and returns the result when the second attempt succeeds', async () => {
+        const serverError = Object.assign(new Error('Server error'), { response: { status: 500 } })
+
+        paystackClient.post
+            .mockRejectedValueOnce(serverError)
+            .mockResolvedValue({ data: { data: { status: 'success', reference: 'REF_retry' } } })
+
+        // Attach the result assertion before advancing timers so the promise
+        // is considered "handled" from the moment it is created.
+        const resultPromise = paymentService.chargeAuthorization('AUTH_x', 'a@b.com', 100, 'ACCT_y')
+        await jest.runAllTimersAsync()
+        const result = await resultPromise
+
+        expect(paystackClient.post).toHaveBeenCalledTimes(2)
+        expect(result).toEqual({ reference: 'REF_retry' })
+    })
+
+    it('retries on ECONNRESET and succeeds on the second attempt', async () => {
+        const networkError = Object.assign(new Error('socket hang up'), { code: 'ECONNRESET' })
+
+        paystackClient.post
+            .mockRejectedValueOnce(networkError)
+            .mockResolvedValue({ data: { data: { status: 'success', reference: 'REF_net' } } })
+
+        const resultPromise = paymentService.chargeAuthorization('AUTH_x', 'a@b.com', 100, 'ACCT_y')
+        await jest.runAllTimersAsync()
+        const result = await resultPromise
+
+        expect(paystackClient.post).toHaveBeenCalledTimes(2)
+        expect(result).toEqual({ reference: 'REF_net' })
+    })
+
+    it('throws immediately on a 400 error without retrying', async () => {
+        const clientError = Object.assign(new Error('Bad request'), { response: { status: 400 } })
+        paystackClient.post.mockRejectedValue(clientError)
+
+        // Attach .rejects before advancing timers to avoid unhandled-rejection warnings.
+        const assertion = expect(
+            paymentService.chargeAuthorization('AUTH_x', 'a@b.com', 100, 'ACCT_y')
+        ).rejects.toThrow('Bad request')
+        await jest.runAllTimersAsync()
+        await assertion
+
+        expect(paystackClient.post).toHaveBeenCalledTimes(1)
+    })
+
+    it('throws after 3 attempts when all attempts fail with a retryable error', async () => {
+        const serverError = Object.assign(new Error('Gateway timeout'), { response: { status: 503 } })
+        paystackClient.post.mockRejectedValue(serverError)
+
+        const assertion = expect(
+            paymentService.chargeAuthorization('AUTH_x', 'a@b.com', 100, 'ACCT_y')
+        ).rejects.toThrow('Gateway timeout')
+        await jest.runAllTimersAsync()
+        await assertion
+
+        expect(paystackClient.post).toHaveBeenCalledTimes(3)
+    })
+
+    it('fast-fails with 503 AppError when the circuit is open (5 prior exhausted-retry failures)', async () => {
+        // Each call exhausts all 3 retries before the circuit breaker records a failure.
+        // After 5 such failures the circuit opens.
+        const serverError = Object.assign(new Error('Down'), { response: { status: 503 } })
+        paystackClient.post.mockRejectedValue(serverError)
+
+        // Trip the circuit: 5 calls × 3 attempts each = 15 post() calls
+        for (let i = 0; i < 5; i++) {
+            const a = expect(
+                paymentService.chargeAuthorization('AUTH_x', 'a@b.com', 100, 'ACCT_y')
+            ).rejects.toThrow()
+            await jest.runAllTimersAsync()
+            await a
+        }
+
+        paystackClient.post.mockClear()
+
+        // Circuit is now OPEN — this call must fast-fail without hitting post()
+        const assertion = expect(
+            paymentService.chargeAuthorization('AUTH_x', 'a@b.com', 100, 'ACCT_y')
+        ).rejects.toThrow('temporarily unavailable')
+        await jest.runAllTimersAsync()
+        await assertion
+
+        expect(paystackClient.post).not.toHaveBeenCalled()
+    })
+})
+
 // ─── createSubaccount() ──────────────────────────────────────────────────────
 //
 // Called once when a driver sets up their payout account. Paystack creates a

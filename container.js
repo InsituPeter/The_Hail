@@ -1,5 +1,5 @@
-const nodemailer = require('nodemailer')
 const config = require('./config')
+const transporter = require('./config/email')
 const mapsClient = require('./config/maps')
 const paystackClient = require('./config/paystack')
 
@@ -45,17 +45,8 @@ const rideRepository = new RideRepository()
 const paymentRepository = new PaymentRepository()
 const adminRepository = new AdminRepository()
 
-const transporter = nodemailer.createTransport({
-    host: config.email.host,
-    port: config.email.port,
-    auth: {
-        user: config.email.user,
-        pass: config.email.pass,
-    }
-})
-
 const templateDomain = new TemplateDomain(config.frontend.url, config.company.name, config.company.supportEmail)
-const emailService = new EmailService(transporter, templateDomain, config)
+const emailService = new EmailService(transporter, templateDomain, config.frontend.url)
 
 const authService = new AuthService(userRepository, tokenRepository, emailService)
 const userService = new UserService(userRepository, emailService, riderRepository)

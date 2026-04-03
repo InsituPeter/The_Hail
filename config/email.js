@@ -1,36 +1,13 @@
-const nodemailer= require('nodemailer')
+const nodemailer = require('nodemailer')
+const config = require('./index')
 
+const transporter = nodemailer.createTransport({
+    host: config.email.host,
+    port: config.email.port,
+    auth: {
+        user: config.email.user,
+        pass: config.email.pass,
+    }
+})
 
-/*async function createEtherealAccount(){
-    const testAcount = await nodemailer.createTestAccount()
-
-    console.log("Here are your Ethereal account credentials:")
-    console.log(`Email: ${testAcount.user}`)
-    console.log(`Password: ${testAcount.pass}`)
-    console.log(`SMTP Host: ${testAcount.smtp.host}`)
-    console.log(`Secure: ${testAcount.smtp.secure}`)
-
-
-    return testAcount
-}
-
-createEtherealAccount()*/
-
-
-async function sendTestEmail(){
-    const testAccount= await nodemailer.createTestAccount()
-    const transporter = nodemailer.createTransport({
-        host: testAccount.smtp.host,
-        port: testAccount.smtp.port,
-        secure: testAccount.smtp.secure,
-        auth: {
-            user: testAccount.user,
-            pass: testAccount.pass
-        } 
-
-    })
-
-
-}
-
-module.exports={sendTestEmail}
+module.exports = transporter

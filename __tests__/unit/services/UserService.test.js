@@ -75,9 +75,9 @@ describe('UserService.createUser()', () => {
     })
 
     it('throws ValidationError when a required field is missing', async () => {
-        // phone is missing
+        // email is missing
         await expect(
-            userService.createUser({ email: 'a@b.com', password: 'pass', name: 'Name', role: 'RIDER' })
+            userService.createUser({ password: 'pass', name: 'Name', role: 'RIDER' })
         ).rejects.toThrow(ValidationError)
     })
 

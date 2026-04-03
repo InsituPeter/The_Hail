@@ -9,7 +9,7 @@ class UserController {
     async getUserById(req, res, next) {
         try {
             const user = await this.userService.getUserById(parseInt(req.params.userId))
-            res.json(user)
+            res.status(200).json({ data: { user } })
         } catch (err) {
             next(err)
         }
@@ -18,7 +18,7 @@ class UserController {
     async updateUser(req, res, next) {
         try {
             const user = await this.userService.updateUser(parseInt(req.params.userId), req.body)
-            res.json(user)
+            res.status(200).json({ data: { user } })
         } catch (err) {
             next(err)
         }

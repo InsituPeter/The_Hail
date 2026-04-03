@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: hail_postgres_dev
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: hail_db_dev
+      POSTGRES_HOST_AUTH_METHOD: trust
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  redis:
+    image: redis:alpine
+    container_name: hail_redis_dev
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+
+volumes:
+  postgres_dev_data:
+  redis_dev_data:

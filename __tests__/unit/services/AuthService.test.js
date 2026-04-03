@@ -272,6 +272,7 @@ describe('AuthService.resetPassword()', () => {
     it('revokes token and updates password hash on success', async () => {
         tokenRepository.findByToken.mockResolvedValue(validToken)
         tokenRepository.revokeToken.mockResolvedValue()
+        tokenRepository.findByUserId.mockResolvedValue([]) // called by logoutAllDevices
         bcrypt.hash.mockResolvedValue('new_hashed_password')
         userRepository.updateProfile.mockResolvedValue()
 

@@ -26,7 +26,7 @@ class AuthController {
             maxAge: 7 * 24 * 60 * 60 * 1000,
         })
 
-        res.status(200).json({ user, accessToken })
+        res.status(200).json({ data: { user, accessToken } })
     }
 
     refresh = async (req, res, next) => {
@@ -44,7 +44,7 @@ class AuthController {
             maxAge: 7 * 24 * 60 * 60 * 1000,
         })
 
-        res.status(200).json({ accessToken })
+        res.status(200).json({ data: { accessToken } })
     }
 
     logout = async (req, res) => {

@@ -327,6 +327,7 @@ describe('RideService.completeRide()', () => {
     })
 
     it('calls chargeAuthorization and records a CARD payment', async () => {
+        rideRepository.findById.mockResolvedValue({ ...storedRide, paymentMethod: 'CARD' })
         riderRepository.findByUserId.mockResolvedValue(riderProfile)
         paymentService.chargeAuthorization.mockResolvedValue({ reference: 'REF_abc' })
 
@@ -340,8 +341,10 @@ describe('RideService.completeRide()', () => {
             2000,   // ₦2000 in Naira — kobo conversion is paymentService's responsibility
             driverProfile.paystackSubaccountCode
         )
-        expect(paymentRepository.create).toHaveBeenCalledWith(100, 2000, 'CARD', 'REF_abc')
-        expect(paymentRepository.capture).toHaveBeenCalledWith(100, 2000)
+        // create records a PENDING payment (no reference yet — that comes from the charge)
+        expect(paymentRepository.create).toHaveBeenCalledWith(100, 2000, 'CARD')
+        // capture updates the payment to CAPTURED and attaches the Paystack reference
+        expect(paymentRepository.capture).toHaveBeenCalledWith(100, 2000, 'REF_abc')
     })
 })
 
